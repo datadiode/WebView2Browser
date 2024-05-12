@@ -212,7 +212,7 @@ BOOL BrowserWindow::InitInstance(HINSTANCE hInstance, LPCWSTR lpCmdLine, int nCm
     GetPrivateProfileStringW(executingFileName, L"AdditionalBrowserArguments", nullptr,
         additionalBrowserArguments, _countof(additionalBrowserArguments), executingFile);
 
-    if (PathIsRelativeW(browserExecutableFolder))
+    if (*browserExecutableFolder && PathIsRelativeW(browserExecutableFolder))
     {
         *executingFileName = L'\0';
         PathAppendW(executingFileFull, browserExecutableFolder);
