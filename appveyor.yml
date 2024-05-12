@@ -10,8 +10,10 @@ platform:
   - x86
 
 build_script:
+  - C:/msys64/usr/bin/wget.exe -nv "https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe"
   - nuget restore
   - msbuild /t:Rebuild /p:Platform="%PLATFORM%" /p:Configuration="%CONFIGURATION%" WebViewBrowserApp.sln
+  - call rcupdate.bat "%CONFIGURATION%_%PLATFORM%\WebView2Browser.exe"
   - 7z a -r %APPVEYOR_PROJECT_NAME%_%CONFIGURATION%_%PLATFORM%.7z %CONFIGURATION%_%PLATFORM%
 
 artifacts:
