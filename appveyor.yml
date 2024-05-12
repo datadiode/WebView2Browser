@@ -14,7 +14,7 @@ build_script:
   - nuget restore
   - msbuild /t:Rebuild /p:Platform="%PLATFORM%" /p:Configuration="%CONFIGURATION%" WebViewBrowserApp.sln
   - call rcupdate.bat "%CONFIGURATION%_%PLATFORM%\WebView2Browser.exe"
-  - 7z a -r %APPVEYOR_PROJECT_NAME%_%CONFIGURATION%_%PLATFORM%.7z %CONFIGURATION%_%PLATFORM%
+  - for /f %%v IN ('git describe') DO 7z a -r %APPVEYOR_PROJECT_NAME%_%CONFIGURATION%_%PLATFORM%_%%v.7z %CONFIGURATION%_%PLATFORM%
 
 artifacts:
-  - path: $(APPVEYOR_PROJECT_NAME)_$(configuration)_$(platform).7z
+  - path: $(APPVEYOR_PROJECT_NAME)_$(configuration)_$(platform)_v*.7z
