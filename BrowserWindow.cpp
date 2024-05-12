@@ -4,6 +4,7 @@
 
 #include "BrowserWindow.h"
 #include "shlobj.h"
+#include <WebView2EnvironmentOptions.h>
 #include <Urlmon.h>
 #pragma comment (lib, "Urlmon.lib")
 
@@ -195,12 +196,43 @@ BOOL BrowserWindow::InitInstance(HINSTANCE hInstance, LPCWSTR lpCmdLine, int nCm
     std::wstring userDataDirectory = GetAppDataDirectory();
     userDataDirectory.append(L"\\User Data");
 
+    WCHAR executingFile[MAX_PATH];
+    WCHAR executingFileFull[MAX_PATH];
+    LPWSTR executingFileName = nullptr;
+
+    WCHAR browserExecutableFolder[MAX_PATH] = { 0 };
+    WCHAR additionalBrowserArguments[4096] = { 0 };
+
+    GetModuleFileNameW(hInstance, executingFile, _countof(executingFile));
+    GetFullPathNameW(executingFile, _countof(executingFileFull), executingFileFull, &executingFileName);
+
+    PathRenameExtensionW(executingFile, L".ini");
+    GetPrivateProfileStringW(executingFileName, L"BrowserExecutableFolder", nullptr,
+        browserExecutableFolder, _countof(browserExecutableFolder), executingFile);
+    GetPrivateProfileStringW(executingFileName, L"AdditionalBrowserArguments", nullptr,
+        additionalBrowserArguments, _countof(additionalBrowserArguments), executingFile);
+
+    if (PathIsRelativeW(browserExecutableFolder))
+    {
+        *executingFileName = L'\0';
+        PathAppendW(executingFileFull, browserExecutableFolder);
+        executingFileName = executingFileFull;
+    }
+    else
+    {
+        executingFileName = browserExecutableFolder;
+    }
+
+    auto environmentOptions = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
+    environmentOptions->put_AdditionalBrowserArguments(additionalBrowserArguments);
+
     // Create WebView environment for web content requested by the user. All
     // tabs will be created from this environment and kept isolated from the
     // browser UI. This enviroment is created first so the UI can request new
     // tabs when it's ready.
-    HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(nullptr, userDataDirectory.c_str(),
-        nullptr, Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
+    HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(executingFileName,
+        userDataDirectory.c_str(), environmentOptions.Get(),
+        Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
             [this](HRESULT result, ICoreWebView2Environment* env) -> HRESULT
     {
         RETURN_IF_FAILED(result);
