@@ -10,7 +10,7 @@
 
 using namespace Microsoft::WRL;
 
-void tryLaunchWindow(HINSTANCE hInstance, int nCmdShow);
+void tryLaunchWindow(HINSTANCE hInstance, LPCWSTR lpCmdLine, int nCmdShow);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_opt_ HINSTANCE hPrevInstance,
@@ -18,15 +18,36 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_ int       nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // Call SetProcessDPIAware() instead when using Windows 7 or any version
-    // below 1703 (Windows 10).
-    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    SetProcessDPIAware();
 
-    BrowserWindow::RegisterClass(hInstance);
+    // Allow only a single application instance
+    // (neglects occasional race conditions for simplicity)
+    if (ATOM const atom = BrowserWindow::RegisterClass(hInstance))
+    {
+        if (HWND const hwnd = FindWindowW(reinterpret_cast<LPCWSTR>(atom), nullptr))
+        {
+            SetForegroundWindow(hwnd);
+            if (size_t const len = wcslen(lpCmdLine))
+            {
+                COPYDATASTRUCT cds;
+                cds.dwData = 1;
+                cds.cbData = static_cast<DWORD>(len + 1) * sizeof *lpCmdLine;
+                cds.lpData = lpCmdLine;
+                DWORD_PTR result = 0;
+                while (SendMessageTimeout(
+                    hwnd, WM_COPYDATA, 0, reinterpret_cast<LPARAM>(&cds),
+                    SMTO_ABORTIFHUNG | SMTO_NOTIMEOUTIFNOTHUNG, 1000, &result) &&
+                    result == IDRETRY)
+                {
+                    Sleep(100);
+                }
+            }
+            return 0;
+        }
+    }
 
-    tryLaunchWindow(hInstance, nCmdShow);
+    tryLaunchWindow(hInstance, lpCmdLine, nCmdShow);
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WEBVIEWBROWSERAPP));
 
@@ -45,9 +66,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return (int) msg.wParam;
 }
 
-void tryLaunchWindow(HINSTANCE hInstance, int nCmdShow)
+void tryLaunchWindow(HINSTANCE hInstance, LPCWSTR lpCmdLine, int nCmdShow)
 {
-    BOOL launched = BrowserWindow::LaunchWindow(hInstance, nCmdShow);
+    BOOL launched = BrowserWindow::LaunchWindow(hInstance, lpCmdLine, nCmdShow);
     if (!launched)
     {
         int msgboxID = MessageBox(NULL, L"Could not launch the browser", L"Error", MB_RETRYCANCEL);
@@ -55,7 +76,7 @@ void tryLaunchWindow(HINSTANCE hInstance, int nCmdShow)
         switch (msgboxID)
         {
         case IDRETRY:
-            tryLaunchWindow(hInstance, nCmdShow);
+            tryLaunchWindow(hInstance, lpCmdLine, nCmdShow);
             break;
         case IDCANCEL:
         default:

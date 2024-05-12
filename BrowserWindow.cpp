@@ -122,6 +122,18 @@ LRESULT CALLBACK BrowserWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, 
         EndPaint(hWnd, &ps);
     }
     break;
+    case WM_COPYDATA:
+    {
+        COPYDATASTRUCT *const pcds = reinterpret_cast<COPYDATASTRUCT *>(lParam);
+        if (pcds->dwData == 1)
+        {
+            if (m_tabs.count(m_activeTabId) == 0)
+                return IDRETRY;
+            m_tabs.at(m_activeTabId)->m_contentWebView->Navigate(static_cast<LPWSTR>(pcds->lpData));
+            return IDOK;
+        }
+    }
+    break;
     default:
     {
         return DefWindowProc(hWnd, message, wParam, lParam);
@@ -132,12 +144,12 @@ LRESULT CALLBACK BrowserWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, 
 }
 
 
-BOOL BrowserWindow::LaunchWindow(_In_ HINSTANCE hInstance, _In_ int nCmdShow)
+BOOL BrowserWindow::LaunchWindow(_In_ HINSTANCE hInstance, LPCWSTR lpCmdLine, _In_ int nCmdShow)
 {
     // BrowserWindow keeps a reference to itself in its host window and will
     // delete itself when the window is destroyed.
     BrowserWindow* window = new BrowserWindow();
-    if (!window->InitInstance(hInstance, nCmdShow))
+    if (!window->InitInstance(hInstance, lpCmdLine, nCmdShow))
     {
         delete window;
         return FALSE;
@@ -155,9 +167,10 @@ BOOL BrowserWindow::LaunchWindow(_In_ HINSTANCE hInstance, _In_ int nCmdShow)
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
 //
-BOOL BrowserWindow::InitInstance(HINSTANCE hInstance, int nCmdShow)
+BOOL BrowserWindow::InitInstance(HINSTANCE hInstance, LPCWSTR lpCmdLine, int nCmdShow)
 {
     m_hInst = hInstance; // Store app instance handle
+    m_lpCmdLine = lpCmdLine;
     LoadStringW(m_hInst, IDS_APP_TITLE, s_title, MAX_LOADSTRING);
 
     SetUIMessageBroker();
@@ -694,6 +707,11 @@ void BrowserWindow::HandleTabCreated(size_t tabId, bool shouldBeActive)
 {
     if (shouldBeActive)
     {
+        if (m_lpCmdLine)
+        {
+            m_tabs.at(tabId)->m_contentWebView->Navigate(m_lpCmdLine);
+            m_lpCmdLine = nullptr;
+        }
         CheckFailure(SwitchToTab(tabId), L"");
     }
 }

@@ -18,7 +18,7 @@ public:
     static LRESULT CALLBACK WndProcStatic(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-    static BOOL LaunchWindow(_In_ HINSTANCE hInstance, _In_ int nCmdShow);
+    static BOOL LaunchWindow(_In_ HINSTANCE hInstance, _In_ LPCWSTR lpCmdLine, _In_ int nCmdShow);
     static std::wstring GetAppDataDirectory();
     std::wstring GetFullPathFor(LPCWSTR relativePath);
     HRESULT HandleTabURIUpdate(size_t tabId, ICoreWebView2* webview);
@@ -32,6 +32,7 @@ public:
     static void CheckFailure(HRESULT hr, LPCWSTR errorMessage);
 protected:
     HINSTANCE m_hInst = nullptr;  // Current app instance
+    LPCWSTR m_lpCmdLine = nullptr;
     HWND m_hWnd = nullptr;
 
     static WCHAR s_windowClass[MAX_LOADSTRING];  // The window class name
@@ -56,7 +57,7 @@ protected:
     EventRegistrationToken m_lostOptionsFocus = {};  // Token for the lost focus handler in options WebView
     Microsoft::WRL::ComPtr<ICoreWebView2WebMessageReceivedEventHandler> m_uiMessageBroker;
 
-    BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
+    BOOL InitInstance(HINSTANCE hInstance, LPCWSTR lpCmdLine, int nCmdShow);
     HRESULT InitUIWebViews();
     HRESULT CreateBrowserControlsWebView();
     HRESULT CreateBrowserOptionsWebView();
