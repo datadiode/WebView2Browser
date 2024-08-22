@@ -730,7 +730,7 @@ HRESULT BrowserWindow::HandleTabSecurityUpdate(size_t tabId, ICoreWebView2* webv
     jsonObj[L"message"] = web::json::value(MG_SECURITY_UPDATE);
     jsonObj[L"args"] = web::json::value::parse(L"{}");
     jsonObj[L"args"][L"tabId"] = web::json::value::number(tabId);
-    jsonObj[L"args"][L"state"] = securityEvent.at(L"securityState");
+    jsonObj[L"args"][L"state"] = securityEvent.at(L"visibleSecurityState");
 
     return PostJsonToWebView(jsonObj, m_controlsWebView.Get());
 }

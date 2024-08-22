@@ -69,7 +69,7 @@ HRESULT Tab::Init(ICoreWebView2Environment* env, bool shouldBeActive)
         // Enable listening for security events to update secure icon
         RETURN_IF_FAILED(m_contentWebView->CallDevToolsProtocolMethod(L"Security.enable", L"{}", nullptr));
 
-        BrowserWindow::CheckFailure(m_contentWebView->GetDevToolsProtocolEventReceiver(L"Security.securityStateChanged", &m_securityStateChangedReceiver), L"");
+        BrowserWindow::CheckFailure(m_contentWebView->GetDevToolsProtocolEventReceiver(L"Security.visibleSecurityStateChanged", &m_securityStateChangedReceiver), L"");
 
         // Forward security status updates to browser
         RETURN_IF_FAILED(m_securityStateChangedReceiver->add_DevToolsProtocolEventReceived(Callback<ICoreWebView2DevToolsProtocolEventReceivedEventHandler>(

@@ -336,7 +336,7 @@ function updateLockIcon() {
         return;
     }
 
-    switch (activeTab.securityState) {
+    switch (activeTab.securityState?.securityState) {
         case 'insecure':
             labelElement.className = 'label-insecure';
             break;
