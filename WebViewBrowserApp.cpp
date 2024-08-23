@@ -23,17 +23,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // Allow only a single application instance
     // (neglects occasional race conditions for simplicity)
-    if (ATOM const atom = BrowserWindow::RegisterClass(hInstance))
+    COPYDATASTRUCT cds;
+    cds.dwData = 1;
+    cds.cbData = static_cast<DWORD>(wcslen(lpCmdLine)) * sizeof *lpCmdLine;
+    cds.lpData = lpCmdLine;
+    if (ATOM const atom = BrowserWindow::RegisterClass(hInstance, cds))
     {
         if (HWND const hwnd = FindWindowW(reinterpret_cast<LPCWSTR>(atom), nullptr))
         {
             SetForegroundWindow(hwnd);
-            if (size_t const len = wcslen(lpCmdLine))
+            if (cds.cbData)
             {
-                COPYDATASTRUCT cds;
-                cds.dwData = 1;
-                cds.cbData = static_cast<DWORD>(len + 1) * sizeof *lpCmdLine;
-                cds.lpData = lpCmdLine;
+                cds.cbData += sizeof *lpCmdLine; // Include the terminating zero
                 DWORD_PTR result = 0;
                 while (SendMessageTimeout(
                     hwnd, WM_COPYDATA, 0, reinterpret_cast<LPARAM>(&cds),

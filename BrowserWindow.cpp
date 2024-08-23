@@ -7,21 +7,47 @@
 #include <WebView2EnvironmentOptions.h>
 #include <Urlmon.h>
 #pragma comment (lib, "Urlmon.lib")
+#include <wincrypt.h>
 
 using namespace Microsoft::WRL;
 
 WCHAR BrowserWindow::s_windowClass[] = { 0 };
 WCHAR BrowserWindow::s_title[] = { 0 };
 
+static BYTE const *MD5(BYTE const *data, DWORD len, BYTE *hash = static_cast<BYTE *>(_alloca(17)))
+{
+    DWORD cbHash = 17;
+    HCRYPTPROV hProv = 0;
+    if (CryptAcquireContext(&hProv, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
+    {
+        HCRYPTPROV hHash = 0;
+        if (CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash))
+        {
+            CryptHashData(hHash, data, len, 0);
+            CryptGetHashParam(hHash, HP_HASHVAL, hash, &cbHash, 0);
+            CryptDestroyHash(hHash);
+        }
+        CryptReleaseContext(hProv, 0);
+    }
+    return cbHash == 16 ? hash : nullptr;
+}
+
 //
 //  FUNCTION: RegisterClass()
 //
 //  PURPOSE: Registers the window class.
 //
-ATOM BrowserWindow::RegisterClass(_In_ HINSTANCE hInstance)
+ATOM BrowserWindow::RegisterClass(HINSTANCE hInstance, COPYDATASTRUCT const &cds)
 {
     // Initialize window class string
-    LoadStringW(hInstance, IDC_WEBVIEWBROWSERAPP, s_windowClass, MAX_LOADSTRING);
+    if (int const len = LoadStringW(hInstance, IDC_WEBVIEWBROWSERAPP, s_windowClass, MAX_LOADSTRING - 40))
+    {
+        if (BYTE const *const hash = cds.cbData ? MD5(static_cast<BYTE *>(cds.lpData), cds.cbData) : nullptr)
+        {
+            StringFromGUID2(*reinterpret_cast<GUID const *>(hash), s_windowClass + len, 40);
+        }
+    }
+
     WNDCLASSEXW wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX);

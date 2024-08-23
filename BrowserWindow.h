@@ -14,7 +14,7 @@ public:
     static const int c_optionsDropdownHeight = 108;
     static const int c_optionsDropdownWidth = 200;
 
-    static ATOM RegisterClass(_In_ HINSTANCE hInstance);
+    static ATOM RegisterClass(HINSTANCE hInstance, COPYDATASTRUCT const &cds);
     static LRESULT CALLBACK WndProcStatic(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
