@@ -9,6 +9,9 @@
 class Tab
 {
 public:
+    static LPCWSTR m_defaultDownloadFolderPath;
+    static COREWEBVIEW2_PREFERRED_COLOR_SCHEME m_preferredColorScheme;
+
     Microsoft::WRL::ComPtr<ICoreWebView2Controller> m_contentController;
     Microsoft::WRL::ComPtr<ICoreWebView2> m_contentWebView;
     Microsoft::WRL::ComPtr<ICoreWebView2DevToolsProtocolEventReceiver> m_securityStateChangedReceiver;

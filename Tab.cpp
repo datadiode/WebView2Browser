@@ -7,6 +7,9 @@
 
 using namespace Microsoft::WRL;
 
+LPCWSTR Tab::m_defaultDownloadFolderPath = nullptr;
+COREWEBVIEW2_PREFERRED_COLOR_SCHEME Tab::m_preferredColorScheme = COREWEBVIEW2_PREFERRED_COLOR_SCHEME_AUTO;
+
 std::unique_ptr<Tab> Tab::CreateNewTab(HWND hWnd, ICoreWebView2Environment* env, size_t id, bool shouldBeActive)
 {
     std::unique_ptr<Tab> tab = std::make_unique<Tab>();
@@ -78,6 +81,20 @@ HRESULT Tab::Init(ICoreWebView2Environment* env, bool shouldBeActive)
             BrowserWindow::CheckFailure(browserWindow->HandleTabSecurityUpdate(m_tabId, webview, args), L"Can't udpate security icon");
             return S_OK;
         }).Get(), &m_securityUpdateToken));
+
+        Microsoft::WRL::ComPtr<ICoreWebView2_13> contentWebView13;
+        if (SUCCEEDED(m_contentWebView.CopyTo(contentWebView13.GetAddressOf())))
+        {
+            Microsoft::WRL::ComPtr<ICoreWebView2Profile> profile;
+            if (SUCCEEDED(contentWebView13->get_Profile(&profile)))
+            {
+                if (m_defaultDownloadFolderPath)
+                {
+                    profile->put_DefaultDownloadFolderPath(m_defaultDownloadFolderPath);
+                }
+                profile->put_PreferredColorScheme(m_preferredColorScheme);
+            }
+        }
 
         browserWindow->HandleTabCreated(m_tabId, shouldBeActive);
 

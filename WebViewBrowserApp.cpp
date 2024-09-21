@@ -21,6 +21,33 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     SetProcessDPIAware();
 
+    while (*lpCmdLine == L'/')
+    {
+        LPWSTR const lpArgs = PathGetArgsW(lpCmdLine);
+        PathRemoveArgsW(lpCmdLine);
+        if (LPWSTR lpEquals = StrRChrW(lpCmdLine, NULL, L'='))
+        {
+            *lpEquals++ = L'\0';
+            PathUnquoteSpacesW(lpEquals);
+            if (StrCmpIW(lpCmdLine, L"/DownloadFolder") == 0)
+            {
+                Tab::m_defaultDownloadFolderPath = lpEquals;
+            }
+            else if (StrCmpIW(lpCmdLine, L"/ColorScheme") == 0)
+            {
+                if (StrCmpIW(lpEquals, L"Light") == 0)
+                {
+                    Tab::m_preferredColorScheme = COREWEBVIEW2_PREFERRED_COLOR_SCHEME_LIGHT;
+                }
+                else if (StrCmpIW(lpEquals, L"Dark") == 0)
+                {
+                    Tab::m_preferredColorScheme = COREWEBVIEW2_PREFERRED_COLOR_SCHEME_DARK;
+                }
+            }
+        }
+        lpCmdLine = lpArgs;
+    }
+
     // Allow only a single application instance
     // (neglects occasional race conditions for simplicity)
     COPYDATASTRUCT cds;
