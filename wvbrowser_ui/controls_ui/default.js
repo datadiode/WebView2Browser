@@ -182,6 +182,8 @@ function tryNavigate(text) {
             case 'https:':
             case 'file:':
             case 'ftp:':
+            case 'about:':
+            case 'edge:':
                 // Allowed protocol, navigate
                 navigateActiveTab(uriParser.href, false);
                 break;
