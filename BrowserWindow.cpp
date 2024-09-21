@@ -11,6 +11,19 @@
 
 using namespace Microsoft::WRL;
 
+template<typename pfn> struct DllImport {
+    FARPROC const p;
+    operator pfn() const { return reinterpret_cast<pfn>(p); }
+};
+
+static struct user32_dll {
+    HMODULE dll;
+    DllImport<UINT(WINAPI*)(HWND)> GetDpiForWindow;
+} const user32 = {
+    GetModuleHandleW(L"user32"),
+    GetProcAddress(user32.dll, "GetDpiForWindow"),
+};
+
 WCHAR BrowserWindow::s_windowClass[] = { 0 };
 WCHAR BrowserWindow::s_title[] = { 0 };
 
@@ -973,10 +986,18 @@ void BrowserWindow::CheckFailure(HRESULT hr, LPCWSTR errorMessage)
 
 int BrowserWindow::GetDPIAwareBound(int bound)
 {
-    // Remove the GetDpiForWindow call when using Windows 7 or any version
-    // below 1607 (Windows 10). You will also have to make sure the build
-    // directory is clean before building again.
-    return (bound * GetDpiForWindow(m_hWnd) / DEFAULT_DPI);
+    // On Windows prior to 10.0.1607, fall back to GetDeviceCaps()
+    int dpi = DEFAULT_DPI;
+    if (user32.GetDpiForWindow)
+    {
+        dpi = user32.GetDpiForWindow(m_hWnd);
+    }
+    else if (HDC const hdc = GetDC(m_hWnd))
+    {
+        dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+        ReleaseDC(m_hWnd, hdc);
+    }
+    return dpi * bound / DEFAULT_DPI;
 }
 
 std::wstring BrowserWindow::GetAppDataDirectory()
