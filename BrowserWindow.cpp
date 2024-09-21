@@ -254,12 +254,7 @@ BOOL BrowserWindow::InitInstance(HINSTANCE hInstance, LPCWSTR lpCmdLine, int nCm
     if (*browserExecutableFolder && PathIsRelativeW(browserExecutableFolder))
     {
         *executingFileName = L'\0';
-        PathAppendW(executingFileFull, browserExecutableFolder);
-        executingFileName = executingFileFull;
-    }
-    else
-    {
-        executingFileName = browserExecutableFolder;
+        PathCombineW(browserExecutableFolder, executingFileFull, browserExecutableFolder);
     }
 
     auto environmentOptions = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
@@ -269,15 +264,15 @@ BOOL BrowserWindow::InitInstance(HINSTANCE hInstance, LPCWSTR lpCmdLine, int nCm
     // tabs will be created from this environment and kept isolated from the
     // browser UI. This enviroment is created first so the UI can request new
     // tabs when it's ready.
-    HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(executingFileName,
+    HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(browserExecutableFolder,
         userDataDirectory.c_str(), environmentOptions.Get(),
         Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-            [this](HRESULT result, ICoreWebView2Environment* env) -> HRESULT
+            [this, browserExecutableFolder](HRESULT result, ICoreWebView2Environment* env) -> HRESULT
     {
         RETURN_IF_FAILED(result);
 
         m_contentEnv = env;
-        HRESULT hr = InitUIWebViews();
+        HRESULT hr = InitUIWebViews(browserExecutableFolder);
 
         if (!SUCCEEDED(hr))
         {
@@ -296,7 +291,7 @@ BOOL BrowserWindow::InitInstance(HINSTANCE hInstance, LPCWSTR lpCmdLine, int nCm
     return TRUE;
 }
 
-HRESULT BrowserWindow::InitUIWebViews()
+HRESULT BrowserWindow::InitUIWebViews(LPCWSTR browserExecutableFolder)
 {
     // Get data directory for browser UI data
     std::wstring browserDataDirectory = GetAppDataDirectory();
@@ -304,7 +299,7 @@ HRESULT BrowserWindow::InitUIWebViews()
 
     // Create WebView environment for browser UI. A separate data directory is
     // used to isolate the browser UI from web content requested by the user.
-    return CreateCoreWebView2EnvironmentWithOptions(nullptr, browserDataDirectory.c_str(),
+    return CreateCoreWebView2EnvironmentWithOptions(browserExecutableFolder, browserDataDirectory.c_str(),
         nullptr, Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
             [this](HRESULT result, ICoreWebView2Environment* env) -> HRESULT
     {

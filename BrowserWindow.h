@@ -58,7 +58,7 @@ protected:
     Microsoft::WRL::ComPtr<ICoreWebView2WebMessageReceivedEventHandler> m_uiMessageBroker;
 
     BOOL InitInstance(HINSTANCE hInstance, LPCWSTR lpCmdLine, int nCmdShow);
-    HRESULT InitUIWebViews();
+    HRESULT InitUIWebViews(LPCWSTR browserExecutableFolder);
     HRESULT CreateBrowserControlsWebView();
     HRESULT CreateBrowserOptionsWebView();
     HRESULT ClearContentCache();
