@@ -14,13 +14,15 @@
 #include <windows.h>
 #include <wrl.h>
 // C RunTime Header Files
-#include <cpprest/json.h>
+#include <nlohmann/json.hpp>
 #include <malloc.h>
 #include <memory.h>
 #include <memory>
 #include <stdlib.h>
 #include <tchar.h>
 #include <map>
+#include <codecvt> // codecvt_utf8
+#include <locale>  // wstring_convert
 
 // App specific includes
 #include "resource.h"

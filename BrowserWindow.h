@@ -69,7 +69,7 @@ protected:
     void SetUIMessageBroker();
     HRESULT ResizeUIWebViews();
     void UpdateMinWindowSize();
-    HRESULT PostJsonToWebView(web::json::value jsonObj, ICoreWebView2* webview);
+    HRESULT PostJsonToWebView(const nlohmann::json jsonData, ICoreWebView2* webview);
     HRESULT SwitchToTab(size_t tabId);
     std::wstring GetFilePathAsURI(std::wstring fullPath);
 };
